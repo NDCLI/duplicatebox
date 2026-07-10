@@ -23,10 +23,15 @@ export const ZoomInspector: React.FC<Props> = ({ result, zipEntries, onClose }) 
 
   useEffect(() => {
     let active = true;
+    const normalizePath = (path: string) => path.replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
     const loadFull = async () => {
       if (!zipEntries) return;
-      const fileName = result.name.split(/[/\\]/).pop() || '';
-      const fileEntry = zipEntries.find(f => f.filename.endsWith(fileName));
+      const requestedPath = normalizePath(result.name);
+      const requestedName = requestedPath.split('/').pop() || '';
+
+      const exactEntry = zipEntries.find(entry => normalizePath(entry.filename) === requestedPath);
+      const fileEntry = exactEntry ?? zipEntries.find(entry => normalizePath(entry.filename).endsWith(`/${requestedName}`) || normalizePath(entry.filename) === requestedName);
+
       if (fileEntry && typeof (fileEntry as any).getData === 'function') {
         const blob = await (fileEntry as any).getData(new BlobWriter());
         const url = URL.createObjectURL(blob);
