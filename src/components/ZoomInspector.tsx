@@ -144,7 +144,8 @@ export const ZoomInspector: React.FC<Props> = ({ result, zipEntries, onClose }) 
                     width={box.xbr - box.xtl} height={box.ybr - box.ytl}
                     fill={isOverlap ? 'rgba(239, 68, 68, 0.1)' : 'transparent'}
                     stroke={isOverlap ? '#ef4444' : 'rgba(255,255,255,0.3)'}
-                    strokeWidth={isOverlap ? 3 : 1}
+                    strokeWidth={isOverlap ? 0.5 : 0.25}
+                    vectorEffect="non-scaling-stroke"
                     className="transition-all hover:stroke-yellow-400"
                     onClick={(e) => { e.stopPropagation(); setSelectedBox(box); }}
                   />

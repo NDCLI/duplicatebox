@@ -7,6 +7,7 @@ import { ZoomInspector } from './components/ZoomInspector';
 
 export interface Box {
   id: string;
+  globalId: number;
   xtl: number;
   ytl: number;
   xbr: number;
@@ -47,6 +48,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [zipEntries, setZipEntries] = useState<Entry[] | null>(null);
   const [selectedResult, setSelectedResult] = useState<ImageResult | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const id = 'cvat-audit-styles';
@@ -113,7 +115,8 @@ export default function App() {
     
     const imageNodes = Array.from(xmlDoc.querySelectorAll('image'));
     const parsedFrames: RawFrame[] = [];
-    
+    let globalIdCounter = 0;
+
     const chunkSize = 200;
     for (let i = 0; i < imageNodes.length; i += chunkSize) {
       setProgress(Math.round((i / imageNodes.length) * 100));
@@ -121,6 +124,7 @@ export default function App() {
       imageNodes.slice(i, i + chunkSize).forEach(node => {
         const boxes: Box[] = Array.from(node.querySelectorAll('box')).map((b, idx) => ({
           id: b.getAttribute('id') || `b-${idx}`,
+          globalId: ++globalIdCounter,
           xtl: parseFloat(b.getAttribute('xtl') || '0'),
           ytl: parseFloat(b.getAttribute('ytl') || '0'),
           xbr: parseFloat(b.getAttribute('xbr') || '0'),
@@ -150,6 +154,22 @@ export default function App() {
     }
     
     setProgress(100);
+  };
+
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const resetData = () => {
+    setRawFrames([]);
+    setZipEntries(null);
+    setSelectedResult(null);
+    setError(null);
+    setProgress(0);
+    setStartFrame(0);
+    setEndFrame(0);
+    setIouThreshold(1.0);
+    setPixelTolerance(0);
+    setIsProcessing(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,21 +249,6 @@ export default function App() {
     };
   }, [rawFrames, startFrame, endFrame, checkOverlaps]);
 
-  const exportCSV = () => {
-    if (!stats || results.length === 0) return;
-    let csv = '\uFEFF';
-    csv += 'Frame ID,Frame Name,Overlap Count,Boxes Detail\n';
-    results.forEach(r => {
-      csv += `${r.id},${r.name},${r.overlaps},"${r.boxes.length} boxes"\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'cvat_audit_report.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="flex h-screen w-screen bg-[#0e0e0e] text-white">
@@ -252,7 +257,7 @@ export default function App() {
         <div className="flex flex-col gap-[24px] flex-1 overflow-clip">
           <div className="flex flex-col gap-2">
             <SectionLabel>Tệp Dữ Liệu</SectionLabel>
-            <input type="file" id="cvat-up" accept=".xml,.zip" className="hidden" onChange={handleFileUpload} disabled={isProcessing} />
+            <input ref={fileInputRef} type="file" id="cvat-up" accept=".xml,.zip" className="hidden" onChange={handleFileUpload} disabled={isProcessing} />
             <label htmlFor="cvat-up"
               className={`flex items-center gap-2 justify-center w-full h-[34px] rounded-xl font-medium text-[12px] cursor-pointer transition-all ${isProcessing ? 'bg-white/10 text-white/40 pointer-events-none' : 'bg-white text-black hover:bg-gray-200'}`}>
               <span className={`material-symbols-outlined text-[18px] ${isProcessing ? 'animate-spin' : ''}`}>
@@ -301,11 +306,8 @@ export default function App() {
         </div>
 
         <div className="flex flex-col gap-[5px] mt-auto">
-          <PillButton variant="outline" icon={<span className="material-symbols-outlined text-[18px]">download</span>} onClick={exportCSV}>
-            Xuất Báo Cáo CSV
-          </PillButton>
-          <PillButton variant="solid" icon={<span className="material-symbols-outlined text-[18px]">refresh</span>} onClick={() => window.location.reload()}>
-            Làm Mới Trang
+          <PillButton variant="solid" icon={<span className="material-symbols-outlined text-[18px]">refresh</span>} onClick={resetData}>
+            Làm Mới Dữ Liệu
           </PillButton>
         </div>
       </div>
