@@ -48,7 +48,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [zipEntries, setZipEntries] = useState<Entry[] | null>(null);
   const [selectedResult, setSelectedResult] = useState<ImageResult | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const id = 'cvat-audit-styles';
