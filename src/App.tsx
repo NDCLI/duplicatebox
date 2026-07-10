@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Entry } from '@zip.js/zip.js';
-import { ZipReader, BlobReader, BlobWriter, TextWriter } from '@zip.js/zip.js';
-import { SectionLabel, PillButton, DragNumberField, RangeSlider, FieldDisplay, TextInput } from './components/Primitives';
+import { ZipReader, BlobReader, TextWriter } from '@zip.js/zip.js';
+import { SectionLabel, PillButton, DragNumberField, RangeSlider, FieldDisplay } from './components/Primitives';
 import { ResultCard } from './components/ResultCard';
 import { ZoomInspector } from './components/ZoomInspector';
 
@@ -176,7 +176,10 @@ export default function App() {
           entry.filename.toLowerCase().endsWith('.xml') && !entry.filename.startsWith('__MACOSX/')
         );
         if (!xmlEntry) throw new Error('Không tìm thấy tệp XML bên trong ZIP.');
-        const xmlText = await xmlEntry.getData!(new TextWriter());
+        if (typeof (xmlEntry as any).getData !== 'function') {
+          throw new Error('Tệp ZIP không chứa dữ liệu XML có thể đọc được.');
+        }
+        const xmlText = await (xmlEntry as any).getData(new TextWriter());
         await processXML(xmlText);
       } else if (fileName.endsWith('.xml')) {
         const text = await fileBlob.text();

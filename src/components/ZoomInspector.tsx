@@ -27,8 +27,8 @@ export const ZoomInspector: React.FC<Props> = ({ result, zipEntries, onClose }) 
       if (!zipEntries) return;
       const fileName = result.name.split(/[/\\]/).pop() || '';
       const fileEntry = zipEntries.find(f => f.filename.endsWith(fileName));
-      if (fileEntry && fileEntry.getData) {
-        const blob = await fileEntry.getData(new BlobWriter());
+      if (fileEntry && typeof (fileEntry as any).getData === 'function') {
+        const blob = await (fileEntry as any).getData(new BlobWriter());
         const url = URL.createObjectURL(blob);
         if (active) setImageSrc(url);
       }
