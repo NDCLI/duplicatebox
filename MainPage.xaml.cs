@@ -852,7 +852,7 @@ public sealed partial class MainPage : Page
         RefreshList();
     }
 
-    // Số box đang đánh dấu "SẼ XÓA" hiện ngay trên nút xóa (cả danh sách lẫn preview).
+    // Số box đang đánh dấu "XÓA" hiện ngay trên nút xóa (cả danh sách lẫn preview).
     private void UpdateDeleteButtons()
     {
         var text = _selectionByBoxId.Count == 0
@@ -867,7 +867,7 @@ public sealed partial class MainPage : Page
         var marked = _selectionByBoxId.Contains(index);
         return new BoxRowItem(
             index,
-            $"{letter} · #{index} {box.Label}: [{box.X1:0.#}, {box.Y1:0.#}, {box.X2:0.#}, {box.Y2:0.#}]" + (marked ? "  ·  SẼ XÓA" : ""),
+            $"{letter} · #{index} {box.Label}: [{box.X1:0.#}, {box.Y1:0.#}, {box.X2:0.#}, {box.Y2:0.#}]" + (marked ? "  ·  XÓA" : ""),
             new SolidColorBrush(marked ? ParseColor("#FB7185") : ParseColor("#94A3B8")));
     }
 
@@ -1017,7 +1017,7 @@ public sealed partial class MainPage : Page
         var uniqueDeletes = deletes.DistinctBy(delete => delete.Id).ToList();
         if (uniqueDeletes.Count == 0)
         {
-            ShowError("Chưa chọn box", "Bấm vào dòng tọa độ của box trong card để đánh dấu 'SẼ XÓA' trước.");
+            ShowError("Chưa chọn box", "Bấm vào dòng tọa độ của box trong card để đánh dấu 'XÓA' trước.");
             return;
         }
 
@@ -1045,6 +1045,15 @@ public sealed partial class MainPage : Page
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         if (PreviewOverlay.Visibility == Visibility.Visible) ClosePreview();
+
+        // Báo trạng thái đang xóa và khóa nút để không bấm lặp trong lúc chờ CVAT.
+        DeleteSelectedButton.IsEnabled = false;
+        PreviewDeleteButton.IsEnabled = false;
+        StatusText.Text = $"Đang xóa {uniqueDeletes.Count} shape trên CVAT…";
+        ResultInfoBar.Title = "Đang xóa trên CVAT";
+        ResultInfoBar.Message = $"Đang xóa {uniqueDeletes.Count} shape trên Job #{cvat.Id}… Vui lòng chờ, không tắt app.";
+        ResultInfoBar.Severity = InfoBarSeverity.Informational;
+        ResultInfoBar.IsOpen = true;
 
         var backupPath = WriteBackupXml();
         try
@@ -1086,6 +1095,11 @@ public sealed partial class MainPage : Page
         catch (Exception ex)
         {
             ShowError("Không thể xóa shape trên CVAT", FriendlyCvatError(ex));
+        }
+        finally
+        {
+            DeleteSelectedButton.IsEnabled = true;
+            PreviewDeleteButton.IsEnabled = true;
         }
     }
 
@@ -1587,6 +1601,7 @@ public sealed partial class MainPage : Page
         PreviewCanvas.Width = width;
         PreviewCanvas.Height = height;
         DrawPreviewBoxes(row);
+        UpdatePreviewMarkButtons();
 
         _previewFitRequestVersion = requestVersion;
         _previewFitPending = true;
@@ -1737,7 +1752,7 @@ public sealed partial class MainPage : Page
     {
         var label = globalIndex is { } index ? $"#{index} {box.Label}" : box.Label;
         if (letter is not null) label = $"{letter} · {label}";
-        if (marked) label += " · SẼ XÓA";
+        if (marked) label += " · XÓA";
         var badgeWidth = Math.Max(label.Length * 7 + 30, 95);
         const double badgeHeight = 16;
 
@@ -1885,7 +1900,7 @@ public sealed partial class MainPage : Page
         if (wasClick) TogglePreviewBoxAt(point.Position);
     }
 
-    // Click (không kéo) lên preview: rơi vào box A/B thì đảo đánh dấu "SẼ XÓA" giống bấm dòng tọa độ trên card.
+    // Click (không kéo) lên preview: rơi vào box A/B thì đảo đánh dấu "XÓA" giống bấm dòng tọa độ trên card.
     private void TogglePreviewBoxAt(Point position)
     {
         if (_previewRow is not { } row) return;
@@ -1905,7 +1920,44 @@ public sealed partial class MainPage : Page
         var index = GetGlobalIndex(hit);
         if (!_selectionByBoxId.Remove(index)) _selectionByBoxId.Add(index);
         DrawPreviewBoxes(row);
+        UpdatePreviewMarkButtons();
         RefreshList();
+    }
+
+    // Nút Chọn A / Chọn B trên thanh preview: dự phòng khi 2 box đè khít nhau không bấm trúng trên ảnh.
+    private void PreviewMarkA_Click(object sender, RoutedEventArgs e) => TogglePreviewMark(_previewRow?.A);
+
+    private void PreviewMarkB_Click(object sender, RoutedEventArgs e) => TogglePreviewMark(_previewRow?.B);
+
+    private void TogglePreviewMark(Box? box)
+    {
+        if (box is null || _previewRow is not { } row) return;
+        var index = GetGlobalIndex(box);
+        if (!_selectionByBoxId.Remove(index)) _selectionByBoxId.Add(index);
+        DrawPreviewBoxes(row);
+        UpdatePreviewMarkButtons();
+        RefreshList();
+    }
+
+    private void UpdatePreviewMarkButtons()
+    {
+        if (PreviewMarkAButton is null || PreviewMarkBButton is null) return;
+        if (_previewRow is not { } row)
+        {
+            PreviewMarkAButton.Content = "Chọn A";
+            PreviewMarkBButton.Content = "Chọn B";
+            return;
+        }
+        SetMarkButtonStyle(PreviewMarkAButton, "A", _selectionByBoxId.Contains(GetGlobalIndex(row.A)));
+        SetMarkButtonStyle(PreviewMarkBButton, "B", _selectionByBoxId.Contains(GetGlobalIndex(row.B)));
+    }
+
+    private static void SetMarkButtonStyle(Button button, string letter, bool marked)
+    {
+        button.Content = marked ? $"{letter} · XÓA" : $"Chọn {letter}";
+        button.Background = new SolidColorBrush(marked ? ParseColor("#7F1D1D") : ParseColor("#1B2A41"));
+        button.BorderBrush = new SolidColorBrush(marked ? ParseColor("#B91C1C") : ParseColor("#2A3A52"));
+        button.Foreground = new SolidColorBrush(marked ? ParseColor("#FECACA") : ParseColor("#CBD5E1"));
     }
 
     private void PreviewViewport_PointerCanceled(object sender, PointerRoutedEventArgs e)

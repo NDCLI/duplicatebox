@@ -307,7 +307,7 @@
                                     <Button x:Name="DeleteSelectedButton" Content="Xóa box đã chọn" Click="DeleteSelected_Click"
                                             HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"
                                             Background="#7F1D1D" BorderBrush="#B91C1C" BorderThickness="1" Foreground="#FECACA"
-                                            ToolTipService.ToolTip="Xóa các box đã đánh dấu 'sẽ xóa' trên CVAT (chỉ khi mở Job)" />
+                                            ToolTipService.ToolTip="Xóa các box đã đánh dấu trên CVAT (chỉ khi mở Job)" />
                                 </Grid>
                                 <TextBox x:Name="SearchTextBox" Grid.Row="1" PlaceholderText="Tìm theo nhãn, tên file hoặc ID frame..." TextChanged="SearchTextBox_TextChanged" MaxWidth="420" HorizontalAlignment="Left" />
                             </Grid>
@@ -407,11 +407,11 @@
                                                     <Button DataContext="{Binding BoxARow}" Content="{Binding CoordText}" Click="BoxRow_Click"
                                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"
                                                             BorderThickness="0" Padding="4,2" FontFamily="Consolas" FontSize="10" Foreground="{Binding TextBrush}"
-                                                            ToolTipService.ToolTip="Bấm để chuyển giữ lại / sẽ xóa — kèm bản sao trùng 100% tọa độ ở frame khác" />
+                                                            ToolTipService.ToolTip="Bấm để chuyển giữ lại / xóa — kèm bản sao trùng 100% tọa độ ở frame khác" />
                                                     <Button DataContext="{Binding BoxBRow}" Content="{Binding CoordText}" Click="BoxRow_Click"
                                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"
                                                             BorderThickness="0" Padding="4,2" FontFamily="Consolas" FontSize="10" Foreground="{Binding TextBrush}"
-                                                            ToolTipService.ToolTip="Bấm để chuyển giữ lại / sẽ xóa — kèm bản sao trùng 100% tọa độ ở frame khác" />
+                                                            ToolTipService.ToolTip="Bấm để chuyển giữ lại / xóa — kèm bản sao trùng 100% tọa độ ở frame khác" />
                                                 </StackPanel>
                                                 <ContentControl Content="{Binding QuickReview}" Visibility="{Binding QuickReviewVisibility}" HorizontalContentAlignment="Center" IsTabStop="False" />
                                                 <Button Content="Mở kiểm tra chi tiết" Click="OpenPreviewDetail_Click" HorizontalAlignment="Stretch"
@@ -467,9 +467,15 @@
                                 <TextBlock x:Name="ZoomPaddingText" Text="±60px" FontSize="11" Foreground="#9AA9BF" VerticalAlignment="Center" FontFamily="Consolas" />
                             </StackPanel>
                             <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button x:Name="PreviewMarkAButton" Content="Chọn A" Click="PreviewMarkA_Click" Padding="8,6"
+                                        Background="#1B2A41" BorderBrush="#2A3A52" BorderThickness="1" Foreground="#CBD5E1"
+                                        ToolTipService.ToolTip="Đánh dấu / bỏ đánh dấu xóa box A — dùng khi 2 box đè khít nhau khó bấm trên ảnh" />
+                                <Button x:Name="PreviewMarkBButton" Content="Chọn B" Click="PreviewMarkB_Click" Padding="8,6"
+                                        Background="#1B2A41" BorderBrush="#2A3A52" BorderThickness="1" Foreground="#CBD5E1"
+                                        ToolTipService.ToolTip="Đánh dấu / bỏ đánh dấu xóa box B — dùng khi 2 box đè khít nhau khó bấm trên ảnh" />
                                 <Button x:Name="PreviewDeleteButton" Click="DeleteSelected_Click" Visibility="Collapsed"
                                         Background="#7F1D1D" BorderBrush="#B91C1C" BorderThickness="1" Foreground="#FECACA"
-                                        ToolTipService.ToolTip="Xóa các box đã đánh dấu 'SẼ XÓA' trên CVAT — bấm vào box A/B trên ảnh để đánh dấu" Padding="8,6">
+                                        ToolTipService.ToolTip="Xóa các box đã đánh dấu trên CVAT — bấm vào box A/B trên ảnh hoặc nút Chọn A/B để đánh dấu" Padding="8,6">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon Glyph="&#xE74D;" FontSize="14" />
                                         <TextBlock x:Name="PreviewDeleteText" Text="Xóa box đã chọn" FontSize="12" VerticalAlignment="Center" />
