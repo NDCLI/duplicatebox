@@ -1,0 +1,11 @@
+bin/
+obj/
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.cer
+*.pfx
+.vs/
+token.txt
+*.user

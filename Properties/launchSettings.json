@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CvatDuplicateChecker (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "CvatDuplicateChecker (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

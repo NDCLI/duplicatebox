@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="CvatDuplicateChecker.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CvatDuplicateChecker"
+    Background="#070B14"
+    RequestedTheme="Dark">
+    <Page.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#111827" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#2A3A52" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#9AA9BF" />
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Background="#080C16" BorderBrush="#223047" BorderThickness="0,0,0,1" Padding="24,14">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                <Image Width="42" Height="42">
+                    <Image.Source>
+                        <SvgImageSource UriSource="ms-appx:///Assets/AppIcon.svg" />
+                    </Image.Source>
+                </Image>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="CVAT Duplicate Checker" FontSize="18" FontWeight="Bold" />
+                    <TextBlock Text="Kiểm tra box trùng nhanh, trực quan và bảo mật" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1">
+            <Grid>
+                <Grid.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#061421" Offset="0" />
+                        <GradientStop Color="#080D19" Offset="0.48" />
+                        <GradientStop Color="#17102B" Offset="1" />
+                    </LinearGradientBrush>
+                </Grid.Background>
+
+                <!-- ═══════════════ LANDING (tab nguồn như UploadZone web) ═══════════════ -->
+                <StackPanel x:Name="LandingPanel" MaxWidth="1080" HorizontalAlignment="Center" Spacing="22" Padding="24,48,24,40">
+                    <StackPanel HorizontalAlignment="Center" Spacing="10" Margin="0,0,0,14">
+                        <TextBlock Text="CVAT ANNOTATION QA" Foreground="#67E8F9" FontSize="12" FontWeight="SemiBold" CharacterSpacing="180" HorizontalAlignment="Center" />
+                        <TextBlock Text="CVAT Duplicate Checker" FontSize="48" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Chọn nguồn dữ liệu để kiểm tra box trùng, rà soát nhãn và xem thống kê." FontSize="17" Foreground="#B9C7DA" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Tab chuyển nguồn: CVAT Online / Offline -->
+                    <Border Background="#0D1524" BorderBrush="#2A3A52" BorderThickness="1" CornerRadius="12" Padding="6">
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="SourceTabCvatButton" Content="CVAT Online" Click="SourceTabCvat_Click"
+                                    HorizontalAlignment="Stretch" FontWeight="SemiBold" Padding="14,10" Background="#3D63D9"
+                                    ToolTipService.ToolTip="Đọc annotation trực tiếp từ server CVAT" />
+                            <Button x:Name="SourceTabFileButton" Grid.Column="1" Content="Offline" Click="SourceTabFile_Click"
+                                    HorizontalAlignment="Stretch" FontWeight="SemiBold" Padding="14,10" Background="Transparent"
+                                    ToolTipService.ToolTip="Phân tích file XML/ZIP cục bộ" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Panel nguồn CVAT Online (bố cục giống CvatConnectPanel web) -->
+                    <Border x:Name="CvatSourcePanel" Style="{StaticResource PanelStyle}">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Border Background="#12233D" CornerRadius="10" Padding="9">
+                                    <FontIcon Glyph="&#xE753;" Foreground="#60A5FA" FontSize="18" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Đọc trực tiếp từ CVAT" FontSize="15" FontWeight="Bold" />
+                                    <TextBlock Text="Mở một Job hoặc cả Task để kiểm tra annotation từ CVAT." Foreground="{StaticResource MutedBrush}" FontSize="12" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Server CVAT mặc định" FontSize="11" FontWeight="SemiBold" Foreground="#AEC0DA" />
+                                    <ComboBox x:Name="CvatServerComboBox" HorizontalAlignment="Stretch" SelectionChanged="CvatServerComboBox_SelectionChanged" />
+                                    <TextBlock Text="Hoặc nhập URL tùy chỉnh:" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+                                    <TextBox x:Name="CustomServerTextBox" PlaceholderText="https://cvat.example.com" TextChanged="CustomServerTextBox_TextChanged" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="6">
+                                    <TextBlock Text="Personal Access Token (đọc và xóa Shape trong Job)" FontSize="11" FontWeight="SemiBold" Foreground="#AEC0DA" />
+                                    <PasswordBox x:Name="PatPasswordBox" PlaceholderText="Dán token CVAT" PasswordChanged="PatPasswordBox_PasswordChanged" />
+                                    <Grid>
+                                        <TextBlock x:Name="PatStatusText" Text="Chưa nhập PAT" Foreground="#7DD3FC" TextWrapping="Wrap" FontSize="11" VerticalAlignment="Center" />
+                                        <CheckBox x:Name="RememberPatCheckBox" Content="Ghi nhớ PAT" HorizontalAlignment="Right" FontSize="11" />
+                                    </Grid>
+                                    <TextBlock x:Name="CvatErrorText" Visibility="Collapsed" Foreground="#F87171" TextWrapping="Wrap" FontSize="11" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="PAT được mã hóa theo tài khoản Windows trên thiết bị này; không lưu trong mã nguồn." Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                <Button x:Name="ClearSavedPatButton" Grid.Column="1" Content="Xóa PAT đã lưu" Click="ClearSavedPatButton_Click" FontSize="11" Padding="10,4" Background="Transparent" BorderBrush="#2A3A52" BorderThickness="1" Foreground="#FCA5A5" />
+                            </Grid>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="ListTasksButton" Content="Lấy danh sách Task" Click="ListTasksButton_Click" Padding="14,9" VerticalAlignment="Bottom" />
+                                <StackPanel Grid.Column="1" Spacing="6">
+                                    <TextBlock Text="Task" FontSize="11" FontWeight="SemiBold" Foreground="#AEC0DA" />
+                                    <Grid>
+                                        <NumberBox x:Name="TaskIdBox" PlaceholderText="Nhập Task ID" Minimum="1" />
+                                        <ComboBox x:Name="TaskComboBox" DisplayMemberPath="Display" SelectionChanged="TaskComboBox_SelectionChanged" HorizontalAlignment="Stretch" Visibility="Collapsed" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Job" FontSize="11" FontWeight="SemiBold" Foreground="#AEC0DA" />
+                                    <Grid>
+                                        <NumberBox x:Name="JobIdBox" PlaceholderText="Lấy danh sách hoặc nhập Job ID" Minimum="1" />
+                                        <ComboBox x:Name="JobComboBox" DisplayMemberPath="Display" SelectionChanged="JobComboBox_SelectionChanged" HorizontalAlignment="Stretch" Visibility="Collapsed" />
+                                    </Grid>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Mở Job" Click="OpenJobButton_Click" VerticalAlignment="Bottom" Padding="20,9" Background="#2458B8" />
+                                <Button Grid.Column="2" Content="Mở Task" Click="OpenTaskButton_Click" VerticalAlignment="Bottom" Padding="20,9" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Panel nguồn Offline (file XML/ZIP) -->
+                    <StackPanel x:Name="FileSourcePanel" Visibility="Collapsed" Spacing="14">
+                        <Button x:Name="OpenFileButton" Click="OpenFileButton_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Background="Transparent" BorderThickness="0">
+                            <Border Background="#0D1A2A" BorderBrush="#277A92" BorderThickness="1" CornerRadius="20" Padding="28,34">
+                                <StackPanel HorizontalAlignment="Center" Spacing="10">
+                                    <Border Background="#103348" BorderBrush="#3D8DA4" BorderThickness="1" CornerRadius="16" Padding="16">
+                                        <FontIcon Glyph="&#xE898;" FontSize="28" Foreground="#67E8F9" />
+                                    </Border>
+                                    <TextBlock Text="BẮT ĐẦU TỪ FILE ANNOTATION" FontSize="11" Foreground="#9FB5D2" FontWeight="SemiBold" CharacterSpacing="140" />
+                                    <TextBlock Text="Chọn file XML hoặc ZIP" FontSize="25" FontWeight="Bold" />
+                                    <TextBlock Text="CVAT XML 1.1 · ZIP (ảnh + annotation)" Foreground="{StaticResource MutedBrush}" FontSize="12" />
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <FontIcon Glyph="&#xE72E;" Foreground="#34D399" FontSize="13" />
+                            <TextBlock Text="File được phân tích ngay trên thiết bị, không rời khỏi máy của bạn." Foreground="{StaticResource MutedBrush}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ═══════════════ WORKSPACE (thứ tự như App.tsx web) ═══════════════ -->
+                <StackPanel x:Name="WorkspacePanel" Visibility="Collapsed" MaxWidth="2400" HorizontalAlignment="Stretch" Spacing="20" Padding="32,24,32,40">
+                    <InfoBar x:Name="ResultInfoBar" IsOpen="False" Severity="Success" IsClosable="True" />
+
+                    <!-- 1 · FileInfoBar -->
+                    <Border Style="{StaticResource PanelStyle}">
+                        <Grid ColumnSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#3A1620" CornerRadius="12" Padding="12" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE8A5;" Foreground="#FB7185" FontSize="22" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="SelectedFileText" Text="Annotation" FontWeight="Bold" FontSize="15" TextWrapping="Wrap" />
+                                <TextBlock x:Name="StatusText" Text="Sẵn sàng." Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <Button x:Name="RefreshCvatButton" Content="Tải lại" Click="RefreshCvatButton_Click" Visibility="Collapsed" Background="#2458B8" />
+                                <Button Content="Đóng" Click="CloseWorkspaceButton_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 2 · Cấu hình quét box trùng: frame | tiêu chí | ngưỡng | nhãn xếp trái→phải, cột cố định cho gọn -->
+                    <Border Style="{StaticResource PanelStyle}">
+                        <StackPanel Spacing="10">
+                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                <FontIcon Glyph="&#xE713;" Foreground="#B7C6DA" />
+                                <TextBlock Text="Cấu hình quét box trùng" FontSize="17" FontWeight="Bold" />
+                            </StackPanel>
+                            <Grid ColumnSpacing="20" RowSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition x:Name="FrameColumn" Width="*" />
+                                    <ColumnDefinition x:Name="CriteriaColumn" Width="*" />
+                                    <ColumnDefinition x:Name="ThresholdColumn" Width="*" />
+                                    <ColumnDefinition x:Name="LabelColumn" Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackPanel x:Name="FramePanel" Grid.Row="0" Grid.ColumnSpan="5" Spacing="6">
+                                    <TextBlock x:Name="FrameRangeTitleText" Text="LỌC THEO VÙNG FRAME" FontSize="11" Foreground="#AEC0DA" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <Grid ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <NumberBox x:Name="FrameStartBox" PlaceholderText="Start" Minimum="0" ValueChanged="FrameRange_ValueChanged" />
+                                        <TextBlock Grid.Column="1" Text="→" VerticalAlignment="Center" Foreground="#94A3B8" />
+                                        <NumberBox x:Name="FrameEndBox" Grid.Column="2" PlaceholderText="End" Minimum="0" ValueChanged="FrameRange_ValueChanged" />
+                                        <Button Grid.Column="3" Content="Reset" Click="ResetFrameRangeButton_Click" ToolTipService.ToolTip="Xóa bộ lọc vùng frame" />
+                                    </Grid>
+                                </StackPanel>
+                                <StackPanel x:Name="CriteriaPanel" Grid.Row="1" Grid.ColumnSpan="5" Spacing="6">
+                                    <TextBlock Text="TIÊU CHÍ SO KHỚP TỌA ĐỘ" FontSize="11" Foreground="#AEC0DA" FontWeight="SemiBold" />
+                                    <Grid ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button x:Name="UseIoUButton" Content="Chỉ số IoU" Click="UseIoUButton_Click" HorizontalAlignment="Stretch" Background="#3D63D9" />
+                                        <Button x:Name="UseToleranceButton" Grid.Column="1" Content="Sai lệch pixel" Click="UseToleranceButton_Click" HorizontalAlignment="Stretch" />
+                                    </Grid>
+                                </StackPanel>
+                                <StackPanel x:Name="ThresholdPanel" Grid.Row="2" Grid.ColumnSpan="5" Spacing="6">
+                                    <Grid>
+                                        <TextBlock Text="HỆ SỐ TRÙNG NHAU TỐI THIỂU (IoU)" FontSize="11" Foreground="#AEC0DA" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="ThresholdText" Text="90% trùng nhau" HorizontalAlignment="Right" Foreground="#FB7185" FontWeight="Bold" FontSize="12" />
+                                    </Grid>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="50% Overlap" Foreground="#AEC0DA" FontSize="11" VerticalAlignment="Center" />
+                                        <Slider x:Name="IoUSlider" Grid.Column="1" Minimum="50" Maximum="100" Value="90" StepFrequency="1" ValueChanged="IoUSlider_ValueChanged" />
+                                        <TextBlock Grid.Column="2" Text="100%" Foreground="#AEC0DA" FontSize="11" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <StackPanel x:Name="TolerancePanel" Visibility="Collapsed" Spacing="6">
+                                        <Grid>
+                                            <TextBlock Text="MỨC SAI LỆCH TỌA ĐỘ CHO PHÉP (PIXEL)" FontSize="11" Foreground="#AEC0DA" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="ToleranceText" Text="0.0 px" HorizontalAlignment="Right" Foreground="#FB7185" FontWeight="Bold" FontSize="12" />
+                                        </Grid>
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Khớp tuyệt đối" Foreground="#AEC0DA" FontSize="11" VerticalAlignment="Center" />
+                                            <Slider x:Name="ToleranceSlider" Grid.Column="1" Minimum="0" Maximum="10" Value="0" StepFrequency="0.5" ValueChanged="ToleranceSlider_ValueChanged" />
+                                            <TextBlock Grid.Column="2" Text="Sai lệch 10px" Foreground="#AEC0DA" FontSize="11" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel x:Name="LabelPanel" Grid.Row="3" Grid.ColumnSpan="5" Spacing="6">
+                                    <TextBlock Text="CÀI ĐẶT NHÃN" FontSize="11" Foreground="#AEC0DA" FontWeight="SemiBold" />
+                                    <Border Background="#0D1625" BorderBrush="#2A3B55" BorderThickness="1" CornerRadius="10" Padding="12">
+                                        <StackPanel Spacing="4">
+                                            <CheckBox x:Name="MatchLabelCheckBox" Content="Chỉ tính trùng khi cùng Nhãn (Label)" IsChecked="True" Click="MatchLabelCheckBox_Click" />
+                                            <TextBlock Text="Cùng tọa độ &amp; cùng nhãn" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="32,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 4 · Danh sách trùng lặp (header + search + chip nhãn + lưới card + phân trang) -->
+                    <Border Style="{StaticResource PanelStyle}" MinHeight="320">
+                        <StackPanel Spacing="14">
+                            <Grid ColumnSpacing="10" RowSpacing="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock x:Name="DuplicateListTitle" Text="Danh sách trùng lặp" FontSize="17" FontWeight="Bold" VerticalAlignment="Center" />
+                                        <Border Background="#3A1D2A" BorderBrush="#7F1D3A" BorderThickness="1" CornerRadius="9" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock x:Name="DuplicateCountText" Text="0 box trùng" Foreground="#FB7185" FontSize="11" FontWeight="Bold" />
+                                        </Border>
+                                        <Border Background="#152238" BorderBrush="#2A3A52" BorderThickness="1" CornerRadius="9" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock x:Name="DuplicateFrameCountText" Text="0 frame" Foreground="#60A5FA" FontSize="11" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Button x:Name="DeleteSelectedButton" Content="Xóa box đã chọn" Click="DeleteSelected_Click"
+                                            HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"
+                                            Background="#7F1D1D" BorderBrush="#B91C1C" BorderThickness="1" Foreground="#FECACA"
+                                            ToolTipService.ToolTip="Xóa các box đã đánh dấu 'sẽ xóa' trên CVAT (chỉ khi mở Job)" />
+                                </Grid>
+                                <TextBox x:Name="SearchTextBox" Grid.Row="1" PlaceholderText="Tìm theo nhãn, tên file hoặc ID frame..." TextChanged="SearchTextBox_TextChanged" MaxWidth="420" HorizontalAlignment="Left" />
+                            </Grid>
+
+                            <!-- Hàng chip lọc theo % trùng (IoU) -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="LỌC THEO % TRÙNG (IoU)" Foreground="#AEC0DA" FontSize="11" FontWeight="SemiBold" />
+                                <ItemsControl x:Name="OverlapChipsView">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <ItemsWrapGrid Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Click="OverlapChip_Click" Background="{Binding ChipBrush}" BorderBrush="{Binding BorderColorBrush}"
+                                                    BorderThickness="1" CornerRadius="999" Padding="10,5" Margin="0,0,8,8"
+                                                    ToolTipService.ToolTip="{Binding Hint}">
+                                                <TextBlock Text="{Binding Text}" Foreground="{Binding TextBrush}" FontSize="11" FontWeight="SemiBold" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- Hàng chip lọc theo nhãn (port từ DuplicateList web) -->
+                            <StackPanel Spacing="8">
+                                <Grid>
+                                    <TextBlock Text="LỌC THEO NHÃN (LABELS)" Foreground="#AEC0DA" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <Button x:Name="SelectAllLabelsButton" Content="Chọn tất cả" Click="SelectAllLabels_Click" HorizontalAlignment="Right"
+                                            FontSize="11" Padding="10,4" Background="Transparent" BorderBrush="#2A3A52" BorderThickness="1" Foreground="#7DD3FC" />
+                                </Grid>
+                                <ItemsControl x:Name="LabelChipsView">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <ItemsWrapGrid Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Click="LabelChip_Click" Background="{Binding ChipBrush}" BorderBrush="{Binding BorderColorBrush}"
+                                                    BorderThickness="1" CornerRadius="999" Padding="10,5" Margin="0,0,8,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Label}" Foreground="{Binding TextBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                    <Border Background="{Binding BadgeBrush}" CornerRadius="8" Padding="5,1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding CountText}" Foreground="{Binding TextBrush}" FontSize="10" FontWeight="Bold" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <ListView x:Name="DuplicateListView" SelectionMode="Single" SelectionChanged="DuplicateListView_SelectionChanged" MinHeight="210" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Stretch">
+                                <ListView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <local:WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ListView.ItemsPanel>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Width" Value="360" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Margin" Value="0,0,14,14" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0D1625" BorderBrush="#263750" BorderThickness="1" CornerRadius="12" Padding="14,12">
+                                            <StackPanel Spacing="8">
+                                                <Grid ColumnSpacing="6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding OrdinalText}" Foreground="#64748B" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" FontFamily="Consolas" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding FrameTitle}" Foreground="#E2E8F0" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    <Border Grid.Column="2" Background="#3A1D2A" BorderBrush="#7F1D3A" BorderThickness="1" CornerRadius="8" Padding="7,2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding BoxCountText}" Foreground="#FB7185" FontSize="10" FontWeight="SemiBold" />
+                                                    </Border>
+                                                    <Border Grid.Column="3" Background="#152238" BorderBrush="#2A3A52" BorderThickness="1" CornerRadius="8" Padding="7,2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding IoUText}" Foreground="#60A5FA" FontSize="10" FontWeight="Bold" />
+                                                    </Border>
+                                                </Grid>
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Border Background="{Binding AccentBrush}" CornerRadius="6" Padding="7,3" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Label}" Foreground="White" FontWeight="SemiBold" FontSize="11" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Details}" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <StackPanel Spacing="2">
+                                                    <Button DataContext="{Binding BoxARow}" Content="{Binding CoordText}" Click="BoxRow_Click"
+                                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"
+                                                            BorderThickness="0" Padding="4,2" FontFamily="Consolas" FontSize="10" Foreground="{Binding TextBrush}"
+                                                            ToolTipService.ToolTip="Bấm để chuyển giữ lại / sẽ xóa — kèm bản sao trùng 100% tọa độ ở frame khác" />
+                                                    <Button DataContext="{Binding BoxBRow}" Content="{Binding CoordText}" Click="BoxRow_Click"
+                                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"
+                                                            BorderThickness="0" Padding="4,2" FontFamily="Consolas" FontSize="10" Foreground="{Binding TextBrush}"
+                                                            ToolTipService.ToolTip="Bấm để chuyển giữ lại / sẽ xóa — kèm bản sao trùng 100% tọa độ ở frame khác" />
+                                                </StackPanel>
+                                                <ContentControl Content="{Binding QuickReview}" Visibility="{Binding QuickReviewVisibility}" HorizontalContentAlignment="Center" IsTabStop="False" />
+                                                <Button Content="Mở kiểm tra chi tiết" Click="OpenPreviewDetail_Click" HorizontalAlignment="Stretch"
+                                                        Background="#152238" BorderBrush="#2A3A52" BorderThickness="1" FontSize="11" Padding="10,6" Foreground="#7DD3FC" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12"><Button Content="← Trước" Click="PreviousPageButton_Click" /><TextBlock x:Name="PageText" Text="Trang 1 / 1" VerticalAlignment="Center" /><Button Content="Sau →" Click="NextPageButton_Click" /></StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ═══════════════ PREVIEW OVERLAY (giữ nguyên cấu trúc pixel-space) ═══════════════ -->
+        <Grid x:Name="PreviewOverlay" Grid.RowSpan="2" Background="#EE050914" Visibility="Collapsed" IsTabStop="True" KeyDown="PreviewOverlay_KeyDown">
+            <Border Background="#0B1220" BorderBrush="#33445F" BorderThickness="1" CornerRadius="18" Margin="24" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border Background="#111A29" BorderBrush="#293A53" BorderThickness="0,0,0,1" Padding="18,14" CornerRadius="18,18,0,0">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE7B3;" Foreground="#60A5FA" />
+                                <TextBlock x:Name="PreviewFrameText" Text="Preview" FontSize="16" FontWeight="Bold" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <Button x:Name="ZoomOutButton" Content="−" Click="ZoomOutButton_Click" ToolTipService.ToolTip="Thu nhỏ" Padding="9,5" />
+                                <Button x:Name="FitPreviewButton" Content="Fit" Click="FitPreviewButton_Click" ToolTipService.ToolTip="Căn toàn bộ ảnh" Padding="8,5" />
+                                <Button x:Name="ZoomInButton" Content="+" Click="ZoomInButton_Click" ToolTipService.ToolTip="Phóng to" Padding="9,5" />
+                                <TextBlock x:Name="PreviewZoomText" Text="100%" FontSize="11" Foreground="#9AA9BF" VerticalAlignment="Center" FontFamily="Consolas" Margin="4,0,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button x:Name="FocusPreviewButton" Click="FocusPreviewButton_Click" ToolTipService.ToolTip="Đến vị trí lỗi" Padding="8,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon Glyph="&#xE721;" FontSize="14" />
+                                        <TextBlock Text="Đến vị trí lỗi" FontSize="12" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Slider x:Name="ZoomPaddingSlider" Minimum="10" Maximum="400" StepFrequency="5" Value="60" Width="100"
+                                        ToolTipService.ToolTip="Khoảng đệm zoom (px)" VerticalAlignment="Center" ValueChanged="ZoomPaddingSlider_ValueChanged" />
+                                <TextBlock x:Name="ZoomPaddingText" Text="±60px" FontSize="11" Foreground="#9AA9BF" VerticalAlignment="Center" FontFamily="Consolas" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button x:Name="PreviewDeleteButton" Click="DeleteSelected_Click" Visibility="Collapsed"
+                                        Background="#7F1D1D" BorderBrush="#B91C1C" BorderThickness="1" Foreground="#FECACA"
+                                        ToolTipService.ToolTip="Xóa các box đã đánh dấu 'SẼ XÓA' trên CVAT — bấm vào box A/B trên ảnh để đánh dấu" Padding="8,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                                        <TextBlock x:Name="PreviewDeleteText" Text="Xóa box đã chọn" FontSize="12" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Click="ToggleAllBoxesButton_Click" x:Name="ToggleAllBoxesButton" ToolTipService.ToolTip="Hiện/ẩn tất cả box trên frame" Padding="8,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon Glyph="&#xE7B3;" FontSize="14" />
+                                        <TextBlock Text="Tất cả box" FontSize="12" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <Button Grid.Column="4" Click="ClosePreviewButton_Click" ToolTipService.ToolTip="Đóng Preview" Padding="8,6">
+                                <FontIcon Glyph="&#xE711;" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <Grid Grid.Row="1">
+                        <!-- Image info bar -->
+                        <Border x:Name="PreviewInfoBar" Background="#0D1625" BorderBrush="#293A53" BorderThickness="1" CornerRadius="6"
+                                Padding="10,5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" Opacity="0.9">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock x:Name="PreviewDimensionsText" Text="" FontSize="10" Foreground="#94A3B8" FontFamily="Consolas" VerticalAlignment="Center" />
+                                <Border Width="1" Background="#334155" Margin="0,2" />
+                                <TextBlock x:Name="PreviewImageStatusText" Text="" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                <Border Width="1" Background="#334155" Margin="0,2" />
+                                <TextBlock Text="Bấm box A/B để đánh dấu xóa box đó" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <Grid x:Name="PreviewViewport" Background="#050810"
+                              SizeChanged="PreviewViewport_SizeChanged"
+                              PointerWheelChanged="PreviewViewport_PointerWheelChanged"
+                              PointerPressed="PreviewViewport_PointerPressed"
+                              PointerMoved="PreviewViewport_PointerMoved"
+                              PointerReleased="PreviewViewport_PointerReleased"
+                              PointerCanceled="PreviewViewport_PointerCanceled">
+                            <Grid x:Name="PreviewSurface" Background="#090D16" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                <Grid.RenderTransform>
+                                    <CompositeTransform x:Name="PreviewTransform" CenterX="0" CenterY="0" />
+                                </Grid.RenderTransform>
+                                <Image x:Name="PreviewImage" Stretch="Fill" />
+                                <Canvas x:Name="PreviewCanvas" IsHitTestVisible="False" />
+                            </Grid>
+                        </Grid>
+                        <!-- Loading overlay -->
+                        <Grid x:Name="PreviewLoadingOverlay" Visibility="Collapsed" Background="#CC050810">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                                <ProgressRing IsActive="True" Width="40" Height="40" Foreground="#FB7185" />
+                                <TextBlock Text="Đang tải ảnh..." FontSize="13" FontWeight="Bold" Foreground="#E2E8F0" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="PreviewLoadingFrameText" Text="" FontSize="10" Foreground="#64748B" FontFamily="Consolas" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                        <!-- Error banner -->
+                        <Border x:Name="PreviewErrorBanner" Visibility="Collapsed" Background="#451A1A" BorderBrush="#7F1D1D" BorderThickness="1"
+                                CornerRadius="6" Padding="12,8" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12">
+                            <TextBlock x:Name="PreviewErrorText" Text="" FontSize="12" Foreground="#FCA5A5" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>
